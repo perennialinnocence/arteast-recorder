@@ -3,6 +3,7 @@ using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using WebDriverManager;
 using WebDriverManager.DriverConfigs.Impl;
+using ScreenRecorderLib;
 
 var profilepath = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),"arteaststudio.txt");
 string? email = "";
@@ -90,8 +91,10 @@ using (var driver = new ChromeDriver(chromeOptions)){
                 {
                     innerchrome.FindElement(By.CssSelector("button[aria-label=\"Play\"]")).Click();
                     innerchrome.FindElement(By.CssSelector("button[aria-label=\"Enter full screen\"]")).Click();
+                    Recorder rec = Recorder.CreateRecorder();
+                    rec.Record(expectedFile);
                     Thread.Sleep(10000);//wait 10 seconds to ensure playback progresses beyond that
-
+                    rec.Stop();
                     innerchrome.ExecuteScript("document.querySelector('button[aria-label=\"Exit full screen\"]').click()");
                     //innerchrome.FindElement(By.CssSelector("button[aria-label=\"Exit full screen\"]")).Click();
                     

@@ -6,9 +6,11 @@
     <RootNamespace>arteast_recorder</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Platform>x64</Platform>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="ScreenRecorderLib" Version="5.2.0" />
     <PackageReference Include="Selenium.WebDriver" Version="4.8.2" />
     <PackageReference Include="WebDriverManager" Version="2.16.2" />
   </ItemGroup>
