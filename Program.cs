@@ -26,8 +26,15 @@ if(File.Exists(profilepath)){
     }
 }
 
+var chromeOptions = new ChromeOptions();
+chromeOptions.AddExcludedArgument("enable-automation");
+chromeOptions.AddAdditionalChromeOption("useAutomationExtension", false);
+chromeOptions.AddUserProfilePreference("credentials_enable_service",false);
+chromeOptions.AddUserProfilePreference("profile.password_manager_enabled",false);
+chromeOptions.AddArgument("--password-store=basic");
+
 new DriverManager().SetUpDriver(new ChromeConfig());
-using (var driver = new ChromeDriver()){
+using (var driver = new ChromeDriver(chromeOptions)){
     try{
         driver.Manage().Window.Maximize();
         driver.Navigate().GoToUrl("https://members.arteaststudio.net");
@@ -76,14 +83,23 @@ using (var driver = new ChromeDriver()){
                 var vid = new WebDriverWait(driver, TimeSpan.FromSeconds(1))
                     .Until(drv=>
                         drv.FindElement(By.CssSelector("div.videoWrapper>iframe")));
-                driver.SwitchTo().Frame(vid);
-                driver.ExecuteScript("document.querySelector('button[aria-label=\"Play\"]').click()");
-                driver.ExecuteScript("document.querySelector('button[aria-label=\"Enter full screen\"]').click()");
-                Thread.Sleep(5000);//wait 5 seconds to ensure playback progresses beyond that
+                Console.WriteLine(vid.GetAttribute("src"));
+                driver.ExecuteScript("document.querySelector('div.videoWrapper').scrollIntoView()");
+                var inner = driver.SwitchTo().Frame(driver.FindElement(By.CssSelector("div.videoWrapper>iframe")));
+                if(inner != null && inner is ChromeDriver innerchrome)
+                {
+                    innerchrome.FindElement(By.CssSelector("button[aria-label=\"Play\"]")).Click();
+                    innerchrome.FindElement(By.CssSelector("button[aria-label=\"Enter full screen\"]")).Click();
+                    Thread.Sleep(10000);//wait 10 seconds to ensure playback progresses beyond that
 
-                driver.ExecuteScript("document.querySelector('button[aria-label=\"Exit full screen\"]').click()");
-
-                driver.SwitchTo().ParentFrame();
+                    innerchrome.ExecuteScript("document.querySelector('button[aria-label=\"Exit full screen\"]').click()");
+                    //innerchrome.FindElement(By.CssSelector("button[aria-label=\"Exit full screen\"]")).Click();
+                    
+                    inner.SwitchTo().ParentFrame();
+                }
+                else{
+                    throw new Exception("inner is not valid");
+                }
             }catch(WebDriverTimeoutException){
                 Console.WriteLine("No video");
             }
