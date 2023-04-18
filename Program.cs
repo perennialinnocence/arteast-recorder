@@ -164,7 +164,7 @@ using (var driver = new ChromeDriver(chromeOptions)){
                             }else{
                                 Thread.Sleep(1000);
                             }
-                            Console.WriteLine(lessonName+" : Progress "+prog);
+                            //Console.WriteLine(lessonName+" : Progress "+prog);
                         }
                         
                         Console.WriteLine(lessonName+" : "+"Stopping recording "+expectedFile);
