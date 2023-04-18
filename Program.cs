@@ -4,7 +4,7 @@ using OpenQA.Selenium.Support.UI;
 using WebDriverManager;
 using WebDriverManager.DriverConfigs.Impl;
 
-var profilepath = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile)+"/arteaststudio.txt";
+var profilepath = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),"arteaststudio.txt");
 string? email = "";
 string? password = "";
 
@@ -64,13 +64,26 @@ using (var driver = new ChromeDriver()){
             var lessonName = getLessons(driver)[i]
                 .FindElement(By.CssSelector("span.cLessonTitle"))
                 .GetAttribute("textContent");
-            Console.WriteLine(lessonName);
+            var expectedFile = lessonName+".mp4";
+            if(File.Exists(expectedFile)){
+                Console.WriteLine(expectedFile+" already exists");
+                continue;
+            }
+            Console.WriteLine("Playing "+lessonName);
             driver.ExecuteScript($"document.querySelectorAll(\"li.list-group-item[data-attr-id]\")[{i}].click()");
             Thread.Sleep(500);
             try{
                 var vid = new WebDriverWait(driver, TimeSpan.FromSeconds(1))
                     .Until(drv=>
-                        drv.FindElement(By.CssSelector("div.videoWrapper")));
+                        drv.FindElement(By.CssSelector("div.videoWrapper>iframe")));
+                driver.SwitchTo().Frame(vid);
+                driver.ExecuteScript("document.querySelector('button[aria-label=\"Play\"]').click()");
+                driver.ExecuteScript("document.querySelector('button[aria-label=\"Enter full screen\"]').click()");
+                Thread.Sleep(5000);//wait 5 seconds to ensure playback progresses beyond that
+
+                driver.ExecuteScript("document.querySelector('button[aria-label=\"Exit full screen\"]').click()");
+
+                driver.SwitchTo().ParentFrame();
             }catch(WebDriverTimeoutException){
                 Console.WriteLine("No video");
             }
