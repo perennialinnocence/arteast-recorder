@@ -28,14 +28,6 @@ if(File.Exists(profilepath)){
     }
 }
 
-var rec = Recorder.CreateRecorder(new RecorderOptions{
-    AudioOptions=new AudioOptions{
-        IsAudioEnabled=true,
-        IsInputDeviceEnabled=false,
-        IsOutputDeviceEnabled=true,
-    }
-});
-
 var chromeOptions = new ChromeOptions();
 chromeOptions.AddExcludedArgument("enable-automation");
 chromeOptions.AddAdditionalChromeOption("useAutomationExtension", false);
@@ -81,8 +73,8 @@ using (var driver = new ChromeDriver(chromeOptions)){
             var lessonName = getLessons(driver)[i]
                 .FindElement(By.CssSelector("span.cLessonTitle"))
                 .GetAttribute("textContent");
-            var expectedFile = Path.Combine(Environment.CurrentDirectory,lessonName+".mp4");
-            Console.WriteLine("Expecting"+expectedFile);
+            var expectedFile = Path.Combine(Environment.CurrentDirectory,lessonName.Replace("/","_").Replace("\\","_")+".mp4");
+            Console.WriteLine("Expecting "+expectedFile);
             if(File.Exists(expectedFile)){
                 Console.WriteLine(expectedFile+" already exists");
                 continue;
@@ -94,16 +86,72 @@ using (var driver = new ChromeDriver(chromeOptions)){
                 var vid = new WebDriverWait(driver, TimeSpan.FromSeconds(1))
                     .Until(drv=>
                         drv.FindElement(By.CssSelector("div.videoWrapper>iframe")));
-                Console.WriteLine(vid.GetAttribute("src"));
+                Console.WriteLine(lessonName+" : "+vid.GetAttribute("src"));
                 driver.ExecuteScript("document.querySelector('div.videoWrapper').scrollIntoView()");
                 var inner = driver.SwitchTo().Frame(driver.FindElement(By.CssSelector("div.videoWrapper>iframe")));
                 if(inner != null && inner is ChromeDriver innerchrome)
                 {
+                    Thread.Sleep(500);
                     innerchrome.FindElement(By.CssSelector("button[aria-label=\"Play\"]")).Click();
                     innerchrome.FindElement(By.CssSelector("button[aria-label=\"Enter full screen\"]")).Click();
-                    rec.Record(expectedFile);
-                    Thread.Sleep(20000);//wait 10 seconds to ensure playback progresses beyond that
-                    rec.Stop();
+                    
+                    using(var rec = Recorder.CreateRecorder(new RecorderOptions{
+                        OutputOptions=new OutputOptions{
+                            RecorderMode = RecorderMode.Video,
+                            //This sets a custom size of the video output, in pixels.
+                            OutputFrameSize = new ScreenSize(1280,720),//720p
+                        },
+                        AudioOptions=new AudioOptions{
+                            IsAudioEnabled=true,
+                            IsInputDeviceEnabled=false,
+                            IsOutputDeviceEnabled=true,
+                            Bitrate = AudioBitrate.bitrate_128kbps,
+                            Channels = AudioChannels.Stereo,
+                        },
+                        MouseOptions=new MouseOptions{
+                            IsMousePointerEnabled=false
+                        },
+                        VideoEncoderOptions=new VideoEncoderOptions{
+                            Bitrate = 8000 * 1000,
+                            Framerate = 60,
+                            IsFixedFramerate = true,
+                            //Currently supported are H264VideoEncoder and H265VideoEncoder
+                            Encoder = new H264VideoEncoder
+                            {
+                                BitrateMode = H264BitrateControlMode.CBR,
+                                EncoderProfile = H264Profile.Main,
+                            },
+                            //Fragmented Mp4 allows playback to start at arbitrary positions inside a video stream,
+                            //instead of requiring to read the headers at the start of the stream.
+                            IsFragmentedMp4Enabled = true,
+                            //If throttling is disabled, out of memory exceptions may eventually crash the program,
+                            //depending on encoder settings and system specifications.
+                            IsThrottlingDisabled = false,
+                            //Hardware encoding is enabled by default.
+                            IsHardwareEncodingEnabled = true,
+                            //Low latency mode provides faster encoding, but can reduce quality.
+                            IsLowLatencyEnabled = false,
+                            //Fast start writes the mp4 header at the beginning of the file, to facilitate streaming.
+                            IsMp4FastStartEnabled = false,
+                        }
+                    }))
+                    {
+                        rec.OnRecordingComplete += (s,e)=>{
+                            Console.WriteLine(lessonName+" : "+"Recorded "+e.FilePath);
+                        };
+                        rec.OnRecordingFailed += (s,e)=>{
+                            Console.WriteLine(lessonName+" : "+"Recording Failed "+e.FilePath+ " err "+e.Error);
+                        };
+                        rec.OnStatusChanged += (s,e)=>{
+                            Console.WriteLine(lessonName+" : "+"Recording Event "+e.Status);
+                        };
+                        Console.WriteLine(lessonName+" : "+"Starting recording "+expectedFile);
+                        rec.Record(expectedFile);
+                        Thread.Sleep(20000);//wait 10 seconds to ensure playback progresses beyond that
+                        
+                        Console.WriteLine(lessonName+" : "+"Stopping recording "+expectedFile);
+                        rec.Stop();
+                    }
                     innerchrome.ExecuteScript("document.querySelector('button[aria-label=\"Exit full screen\"]').click()");
                     //innerchrome.FindElement(By.CssSelector("button[aria-label=\"Exit full screen\"]")).Click();
                     
@@ -113,7 +161,7 @@ using (var driver = new ChromeDriver(chromeOptions)){
                     throw new Exception("inner is not valid");
                 }
             }catch(WebDriverTimeoutException){
-                Console.WriteLine("No video");
+                Console.WriteLine(lessonName+" : No video");
             }
         }
 
