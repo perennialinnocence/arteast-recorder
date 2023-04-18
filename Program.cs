@@ -69,11 +69,15 @@ using (var driver = new ChromeDriver(chromeOptions)){
         var lessonCount = getLessons(driver).Count;
 
         Console.WriteLine("Listing Lessons");
+        var videosfolder = Path.Combine(Environment.CurrentDirectory,"videos");
+        if(!Path.Exists(videosfolder)){
+            Directory.CreateDirectory(videosfolder);
+        }
         for(var i = 0;i<lessonCount;i++){
             var lessonName = getLessons(driver)[i]
                 .FindElement(By.CssSelector("span.cLessonTitle"))
                 .GetAttribute("textContent");
-            var expectedFile = Path.Combine(Environment.CurrentDirectory,lessonName.Replace("/","_").Replace("\\","_")+".mp4");
+            var expectedFile = Path.Combine(videosfolder,lessonName.Replace("/","_").Replace("\\","_")+".mp4");
             Console.WriteLine("Expecting "+expectedFile);
             if(File.Exists(expectedFile)){
                 Console.WriteLine(expectedFile+" already exists");
@@ -147,7 +151,15 @@ using (var driver = new ChromeDriver(chromeOptions)){
                         };
                         Console.WriteLine(lessonName+" : "+"Starting recording "+expectedFile);
                         rec.Record(expectedFile);
-                        Thread.Sleep(20000);//wait 10 seconds to ensure playback progresses beyond that
+                        Thread.Sleep(10000);//wait 10 seconds to ensure playback progresses beyond that
+                        var complete = false;
+                        while(!complete){
+                            if(int.Parse(innerchrome.ExecuteScript("document.querySelector('[aria-label=\"Progress Bar\"]').attributes['aria-valuenow'].value")?.ToString()??"0")<5){
+                                complete = true;
+                            }else{
+                                Thread.Sleep(1000);
+                            }
+                        }
                         
                         Console.WriteLine(lessonName+" : "+"Stopping recording "+expectedFile);
                         rec.Stop();
