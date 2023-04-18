@@ -109,21 +109,21 @@ using (var driver = new ChromeDriver(chromeOptions)){
                             IsAudioEnabled=true,
                             IsInputDeviceEnabled=false,
                             IsOutputDeviceEnabled=true,
-                            Bitrate = AudioBitrate.bitrate_128kbps,
+                            Bitrate = AudioBitrate.bitrate_96kbps,
                             Channels = AudioChannels.Stereo,
                         },
                         MouseOptions=new MouseOptions{
                             IsMousePointerEnabled=false
                         },
                         VideoEncoderOptions=new VideoEncoderOptions{
-                            Bitrate = 8000 * 1000,
-                            Framerate = 60,
+                            Bitrate = 5000 * 1000,
+                            Framerate = 25,
                             IsFixedFramerate = true,
                             //Currently supported are H264VideoEncoder and H265VideoEncoder
                             Encoder = new H264VideoEncoder
                             {
-                                BitrateMode = H264BitrateControlMode.CBR,
-                                EncoderProfile = H264Profile.Main,
+                                BitrateMode = H264BitrateControlMode.Quality,
+                                EncoderProfile = H264Profile.High,
                             },
                             //Fragmented Mp4 allows playback to start at arbitrary positions inside a video stream,
                             //instead of requiring to read the headers at the start of the stream.
@@ -137,6 +137,7 @@ using (var driver = new ChromeDriver(chromeOptions)){
                             IsLowLatencyEnabled = false,
                             //Fast start writes the mp4 header at the beginning of the file, to facilitate streaming.
                             IsMp4FastStartEnabled = false,
+                            Quality=70,
                         }
                     }))
                     {
