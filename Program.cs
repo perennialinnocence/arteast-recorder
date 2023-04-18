@@ -116,7 +116,7 @@ using (var driver = new ChromeDriver(chromeOptions)){
                             IsMousePointerEnabled=false
                         },
                         VideoEncoderOptions=new VideoEncoderOptions{
-                            Bitrate = 8000 * 1000,
+                            Bitrate = 5000 * 1000,
                             Framerate = 25,
                             IsFixedFramerate = true,
                             //Currently supported are H264VideoEncoder and H265VideoEncoder
@@ -137,7 +137,7 @@ using (var driver = new ChromeDriver(chromeOptions)){
                             IsLowLatencyEnabled = false,
                             //Fast start writes the mp4 header at the beginning of the file, to facilitate streaming.
                             IsMp4FastStartEnabled = false,
-                            Quality=80,
+                            Quality=65,
                         }
                     }))
                     {
