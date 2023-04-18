@@ -155,11 +155,15 @@ using (var driver = new ChromeDriver(chromeOptions)){
                         Thread.Sleep(10000);//wait 10 seconds to ensure playback progresses beyond that
                         var complete = false;
                         while(!complete){
-                            if(int.Parse(innerchrome.ExecuteScript("document.querySelector('[aria-label=\"Progress Bar\"]').attributes['aria-valuenow'].value")?.ToString()??"0")<5){
+                            var prog = int.Parse(
+                                innerchrome.ExecuteScript("document.querySelector('[aria-label=\"Progress Bar\"]').attributes['aria-valuenow'].value")
+                                ?.ToString()??"0");
+                            if(prog<5){
                                 complete = true;
                             }else{
                                 Thread.Sleep(1000);
                             }
+                            Console.WriteLine(lessonName+" : Progress "+prog);
                         }
                         
                         Console.WriteLine(lessonName+" : "+"Stopping recording "+expectedFile);
