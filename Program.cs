@@ -5,6 +5,7 @@ using WebDriverManager;
 using WebDriverManager.DriverConfigs.Impl;
 using ScreenRecorderLib;
 
+
 var profilepath = Path.Join(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),"arteaststudio.txt");
 string? email = "";
 string? password = "";
@@ -26,6 +27,14 @@ if(File.Exists(profilepath)){
         throw new Exception("Invalid Email/Password");
     }
 }
+
+var rec = Recorder.CreateRecorder(new RecorderOptions{
+    AudioOptions=new AudioOptions{
+        IsAudioEnabled=true,
+        IsInputDeviceEnabled=false,
+        IsOutputDeviceEnabled=true,
+    }
+});
 
 var chromeOptions = new ChromeOptions();
 chromeOptions.AddExcludedArgument("enable-automation");
@@ -72,7 +81,8 @@ using (var driver = new ChromeDriver(chromeOptions)){
             var lessonName = getLessons(driver)[i]
                 .FindElement(By.CssSelector("span.cLessonTitle"))
                 .GetAttribute("textContent");
-            var expectedFile = lessonName+".mp4";
+            var expectedFile = Path.Combine(Environment.CurrentDirectory,lessonName+".mp4");
+            Console.WriteLine("Expecting"+expectedFile);
             if(File.Exists(expectedFile)){
                 Console.WriteLine(expectedFile+" already exists");
                 continue;
@@ -91,9 +101,8 @@ using (var driver = new ChromeDriver(chromeOptions)){
                 {
                     innerchrome.FindElement(By.CssSelector("button[aria-label=\"Play\"]")).Click();
                     innerchrome.FindElement(By.CssSelector("button[aria-label=\"Enter full screen\"]")).Click();
-                    Recorder rec = Recorder.CreateRecorder();
                     rec.Record(expectedFile);
-                    Thread.Sleep(10000);//wait 10 seconds to ensure playback progresses beyond that
+                    Thread.Sleep(20000);//wait 10 seconds to ensure playback progresses beyond that
                     rec.Stop();
                     innerchrome.ExecuteScript("document.querySelector('button[aria-label=\"Exit full screen\"]').click()");
                     //innerchrome.FindElement(By.CssSelector("button[aria-label=\"Exit full screen\"]")).Click();

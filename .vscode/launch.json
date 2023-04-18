@@ -9,7 +9,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/bin/Debug/net7.0/arteast-recorder.dll",
+            "program": "${workspaceFolder}/bin/x64/Debug/net7.0/arteast-recorder.dll",
             "args": [],
             "cwd": "${workspaceFolder}",
             "console": "internalConsole",
